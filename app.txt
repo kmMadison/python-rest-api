@@ -1,0 +1,57 @@
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
+import os
+import product #product class
+import productSchema
+from product import db, Product
+
+
+#init app
+app = Flask(__name__)
+#locate the database file using the os package
+basedir = os.path.abspath(os.path.dirname(__file__)) #curent file we are in
+
+#database - found in the current folder structure
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'db.sqlite')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+#init db
+#db = SQLAlchemy(app)
+db.init_app(app)
+
+#creates a sqlite file
+#with app.app_context():
+    #db.create_all()
+
+#init marshmallow
+ma = Marshmallow(app)
+ma.init_app(app)
+
+#init schema
+#product_schema = productSchema(strict=True)
+#products_schema = productSchema(many=True, strict=True)
+
+#example of routing
+@app.route('/', methods=['GET'])
+def hello():
+    return jsonify({'msg': 'Hello World'})
+
+#create a product
+@app.route('/product', methods=['POST'])
+def add_product():
+    name = request.json['name']
+    description = request.json['description']
+    price = request.json['price']
+    qty = request.json['qty']
+
+    new_product = Product(name, description, price, qty)
+    #add to the database
+    db.session.add(new_product)
+    db.session.commit()
+
+    return product_schema.jsonify(new_product)
+
+#run server
+if __name__ == '__main__':
+    app.run(debug=True)
